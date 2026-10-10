@@ -23,7 +23,12 @@ Escribe una consulta que devuelva el sueldo medio por departamento para departam
 
 Solución:
 ```sql
-
+select
+dpto,
+avg (sueldo) as sueldo_medio
+from empleado
+group by dpto 
+having count(dni) > 1;
 ```
 
 Resultado:
