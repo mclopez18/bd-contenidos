@@ -32,7 +32,26 @@ La dirección de la empresa necesita un informe completo sobre la situación de 
 
 Solución:
 ```sql
-
+SELECT 
+    d.nombre AS nombre_departamento,
+    CONCAT(dir.nombre, ' ', dir.apellido1) AS nombre_director,
+    COUNT(DISTINCT e.dni) AS num_empleados,
+    COUNT(DISTINCT p.numero) AS num_proyectos
+FROM 
+    DEPARTAMENTO d
+LEFT JOIN 
+    EMPLEADO dir ON d.director = dir.dni
+LEFT JOIN 
+    EMPLEADO e ON d.numero = e.dpto AND e.dni != d.director
+LEFT JOIN 
+    PROYECTO p ON d.numero = p.dpto
+GROUP BY 
+    d.numero, 
+    d.nombre, 
+    dir.nombre, 
+    dir.apellido1
+ORDER BY 
+    num_empleados DESC;
 ```
 
 Tabla resultado:
@@ -176,7 +195,14 @@ Escribe una consulta que muestre los nombres de los departamentos cuyo sueldo me
 
 Solución:
 ```sql
-
+SELECT 
+   D. nombre,
+   AVG(E.sueldo) as sueldoMedio
+   FROM EMPLEADO E INNER JOIN DEPARTAMENTO D ON (E.dpto = D.numero)
+   GROUP BY D.numero, D.nombre
+   HAVING AVG(E.sueldo) > ( SELECT AVG(Sueldo)
+						 FROM EMPLEADO
+					    );
 ```
 
 Tabla resultado:
@@ -291,7 +317,16 @@ Escribe una consulta que liste el nombre y apellido de los empleados que trabaja
 
 Solución:
 ```sql
-
+SELECT
+ E.nombre,
+ E.apellido1
+FROM EMPLEADO E
+WHERE dni IN( SELECT  T.empleado
+		 FROM TRABAJA_EN T
+		 INNER JOIN PROYECTO P ON T.proyecto = P.numero
+		 WHERE P.ubicacion ='Madrid'
+		 )
+  ORDER BY apellido1 ASC, nombre ASC;
 ```
 
 Tabla resultado:
@@ -431,7 +466,16 @@ Escribe una consulta que liste el el nombre y apellido de cada empleado junto co
 
 Solución:
 ```sql
-
+SELECT 
+    E1.nombre, 
+    E1.apellido1, 
+    (E1.sueldo - (SELECT AVG(E2.sueldo) 
+                  FROM EMPLEADO E2 
+                  WHERE E1.dpto = E2.dpto)) AS diferenciaSueldoMedio
+FROM 
+    EMPLEADO E1
+ORDER BY 
+    diferenciaSueldoMedio DESC;
 ```
 
 Tabla resultado:
@@ -518,7 +562,7 @@ Escribe una consulta que liste el nombre de los proyectos donde trabaja al menos
 
 Solución:
 ```sql
-
+SELECT P.nombre FROM PROYECTO P WHERE EXISTS ( SELECT T.empleado FROM TRABAJA_EN T INNER JOIN EMPLEADO E ON T.empleado = E.dni INNER JOIN DEPARTAMENTO D ON E.dpto = D.numero WHERE T.proyecto = P.numero -- CORRELACIÓN AND D.nombre = 'Investigación' ) ORDER BY P.nombre ASC;
 ```
 
 Tabla resultado:
@@ -608,6 +652,24 @@ SELECT nombre, apellido1, sueldo FROM EMPLEADO;
 Solución:
 ```sql
 
+UPDATE EMPLEADO
+SET sueldo = sueldo + (sueldo * 0.20)
+WHERE dni IN (
+    SELECT empleado
+    FROM TRABAJA_EN
+    GROUP BY empleado
+    HAVING SUM(horas) > (
+        SELECT AVG(total_horas)
+        FROM (
+            SELECT SUM(horas) AS total_horas
+            FROM TRABAJA_EN
+            GROUP BY empleado
+        )
+    )
+);
+
+
+SELECT nombre, apellido1, sueldo FROM EMPLEADO;
 ```
 
 Tabla resultado:
@@ -738,7 +800,14 @@ Escribe una consulta que devuelva el `dni` de los empleados que no tienen ningú
 
 Solución:
 ```sql
-
+SELECT dni
+FROM EMPLEADO
+WHERE dni NOT IN (
+    SELECT empleado
+    FROM FAMILIAR
+)
+ORDER BY dni;
+    
 ```
 
 Tabla resultado:
@@ -796,7 +865,20 @@ WHERE P.ubicacion = 'Madrid';
 
 Solución:
 ```sql
-
+SELECT DISTINCT
+    nombre,
+    apellido1
+FROM EMPLEADO
+WHERE dni IN (
+    SELECT empleado
+    FROM TRABAJA_EN
+    WHERE proyecto IN (
+        SELECT numero
+        FROM PROYECTO
+        WHERE ubicacion = 'Madrid'
+    )
+)
+ORDER BY nombre;
 ```
 
 Tabla resultado:
