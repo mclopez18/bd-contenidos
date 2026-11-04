@@ -22,7 +22,13 @@ Escribe una consulta que calcule y devuelva una columna llamada `que_donde` que 
 Solución:
 ```sql
 
-
+select 
+   Upper(genero) || " " || Lower(pais) as que_donde,
+   Round((me_gusta*100.0/reproducciones),1) as porcentaje_me_gusta
+from cancion
+   where not idioma="ES"
+   order by porcentaje_me_gusta desc
+   limit 10;
 ```
 
 Resultado:
@@ -167,7 +173,17 @@ Para emitir una canción en la radio hay que añadirle una cuña publicitaria. E
 
 Solución:
 ```sql
-
+select distinct
+   titulo,
+   pais,
+   duracion,
+   case
+       when pais = 'Reino Unido' then Round((duracion + 30.0)/60.0,2)
+	   when pais = 'España' then Round((duracion + 45.0)/60.0,2)
+   end as duracion_radio_min
+from cancion
+   order by duracion desc
+   limit 20;
 
 ```
 
@@ -372,7 +388,19 @@ Escribe una consulta para encontrar las canciones (`cancion`) cuya duración (`d
 Solución:
 ```sql
 
-
+select distinct
+   id_cancion,
+   titulo,
+   genero,
+   pais,
+   idioma,
+   duracion,
+   anio,
+   reproducciones,
+   me_gusta,
+   valoracion
+from cancion
+   where idioma is null and duracion is not null;
 ```
 
 Resultado:
@@ -471,7 +499,21 @@ Escribe una consulta que devuelva todas las columnas de las canciones y añada u
 
 Solución:
 ```sql
-
+select 
+   id_cancion,
+   titulo,
+   genero,
+   pais,
+   idioma,
+   duracion,
+   anio,
+   reproducciones,
+   me_gusta,
+   valoracion,
+   coalesce(duracion, reproducciones, me_gusta, valoracion, -1) as primer_dato
+from cancion
+   order by id_cancion desc
+   limit 10;1
 
 ```
 
@@ -582,6 +624,9 @@ Escribe una consulta que cuente las canciones que **no** están en inglés, cont
 Solución:
 
 ```sql
+select count (*) as no_ingles
+from cancion
+  where idioma not in ('EN') or idioma is null;
 ```
 
 Resultado:
@@ -654,7 +699,10 @@ Salida:
 Solución:
 ```sql
 
-
+select 
+    avg(reproducciones)
+from cancion
+  where reproducciones > 1000000;
 ```
 
 Resultado:
@@ -694,7 +742,10 @@ Salida:
 Solución:
 ```sql
 
-
+select 
+    count(distinct anio) as anios_distintos
+from cancion
+  
 ```
 
 Resultado:
@@ -763,7 +814,11 @@ Escribe una consulta que muestre cada año de publicación (`anio`) distinto en 
 
 Solución:
 ```sql
-
+select 
+    anio,
+	count(distinct titulo) as canciones_mismo_anio   
+from cancion
+  group by anio;
 
 ```
 
@@ -881,7 +936,12 @@ Escribe una consulta que cuente el número de canciones de cada una de las sigui
 Solución:
 ```sql
 
-
+select 
+	count(distinct titulo) filter (where duracion < 200.0) as corta,
+	count(distinct titulo) filter (where duracion between 200.0 and 300.0) as media,
+	count(distinct titulo) filter (where duracion > 300.0) as larga
+from cancion;
+ 
 ```
 
 Resultado:
